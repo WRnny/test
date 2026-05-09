@@ -62,162 +62,11 @@ info: MotorB(/ti/driverlib/PWM): Peripheral does not retain register contents in
 info: MotorA(/ti/driverlib/PWM): Peripheral does not retain register contents in STOP or STANDBY modes. User should take care to save and restore register configuration in application. See Retention Configuration section for more details.
 info: TIMER_0(/ti/driverlib/TIMER): Peripheral does not retain register contents in STOP or STANDBY modes. User should take care to save and restore register configuration in application. See Retention Configuration section for more details.
 5 error(s), 8 warning(s)
-Hardware/Serial.c(15): error: use of undeclared identifier 'UART_0_INST'
-   15 |                 DL_UART_transmitDataBlocking(UART_0_INST, *str);
-      |                                              ^
-Hardware/Serial.c(36): error: use of undeclared identifier 'UART_0_INST'
-   36 |                 DL_UART_transmitDataBlocking(UART_0_INST, Number / Serial_Pow(10, Length - i - 1) % 10 + '0');
-      |                                              ^
-Hardware/Serial.c(42): error: use of undeclared identifier 'UART_0_INST'
-   42 |         DL_UART_transmitDataBlocking(UART_0_INST, Byte);
-      |                                      ^
-3 errors generated.
-compiling Serial.c...
-compiling Track.c...
-compiling clock.c...
-Hardware/Motor.c(9): error: use of undeclared identifier 'MotorB_INST'; did you mean 'Motor_Init'?
-    9 |         DL_TimerA_startCounter(MotorB_INST);
-      |                                ^~~~~~~~~~~
-      |                                Motor_Init
-Hardware/Motor.c(7): note: 'Motor_Init' declared here
-    7 | void Motor_Init()
-      |      ^
-Hardware/Motor.c(10): error: use of undeclared identifier 'MotorA_INST'; did you mean 'Motor_Init'?
-   10 |         DL_TimerA_startCounter(MotorA_INST);
-      |                                ^~~~~~~~~~~
-      |                                Motor_Init
-Hardware/Motor.c(7): note: 'Motor_Init' declared here
-    7 | void Motor_Init()
-      |      ^
-2 errors generated.
-compiling Motor.c...
-Hardware/Alert.c(5): error: use of undeclared identifier 'GPIO_LED_PORT'
-    5 |         DL_GPIO_setPins(GPIO_LED_PORT,GPIO_LED_Led1_PIN);
-      |                         ^
-Hardware/Alert.c(5): error: use of undeclared identifier 'GPIO_LED_Led1_PIN'
-    5 |         DL_GPIO_setPins(GPIO_LED_PORT,GPIO_LED_Led1_PIN);
-      |                                       ^
-Hardware/Alert.c(9): error: use of undeclared identifier 'GPIO_LED_PORT'
-    9 |         DL_GPIO_clearPins(GPIO_LED_PORT,GPIO_LED_Led1_PIN);
-      |                           ^
-Hardware/Alert.c(9): error: use of undeclared identifier 'GPIO_LED_Led1_PIN'
-    9 |         DL_GPIO_clearPins(GPIO_LED_PORT,GPIO_LED_Led1_PIN);
-      |                                         ^
-Hardware/Alert.c(13): error: use of undeclared identifier 'GPIO_LED_PORT'
-   13 |         DL_GPIO_setPins(GPIO_LED_PORT,GPIO_LED_Led2_PIN);
-      |                         ^
-Hardware/Alert.c(13): error: use of undeclared identifier 'GPIO_LED_Led2_PIN'
-   13 |         DL_GPIO_setPins(GPIO_LED_PORT,GPIO_LED_Led2_PIN);
-      |                                       ^
-Hardware/Alert.c(17): error: use of undeclared identifier 'GPIO_LED_PORT'
-   17 |         DL_GPIO_clearPins(GPIO_LED_PORT,GPIO_LED_Led2_PIN);
-      |                           ^
-Hardware/Alert.c(17): error: use of undeclared identifier 'GPIO_LED_Led2_PIN'
-   17 |         DL_GPIO_clearPins(GPIO_LED_PORT,GPIO_LED_Led2_PIN);
-      |                                         ^
-Hardware/Alert.c(33): error: use of undeclared identifier 'Buzzer_INST'; did you mean 'Buzzer_ON'?
-   33 |         DL_TimerG_setCaptureCompareValue(Buzzer_INST,5000,DL_TIMER_CC_0_INDEX);
-      |                                          ^~~~~~~~~~~
-      |                                          Buzzer_ON
-Hardware\Alert.h(12): note: 'Buzzer_ON' declared here
-   12 | void Buzzer_ON();
-      |      ^
-Hardware/Alert.c(37): error: use of undeclared identifier 'Buzzer_INST'; did you mean 'Buzzer_ON'?
-   37 |         DL_TimerG_setCaptureCompareValue(Buzzer_INST,200,DL_TIMER_CC_0_INDEX);
-      |                                          ^~~~~~~~~~~
-      |                                          Buzzer_ON
-Hardware/Alert.c(35): note: 'Buzzer_ON' declared here
-   35 | void Buzzer_ON()
-      |      ^
-10 errors generated.
-compiling Alert.c...
-compiling encoder.c...
-compiling Jy61p.c...
-compiling ti_msp_dl_config.c...
-compiling wit.c...
-compiling delay.c...
-Hardware/Key.c(7): error: use of undeclared identifier 'Key_Up_PORT'
-    7 |         if(DL_GPIO_readPins(Key_Up_PORT,Key_Up_PIN)==0)
-      |                             ^
-Hardware/Key.c(7): error: use of undeclared identifier 'Key_Up_PIN'
-    7 |         if(DL_GPIO_readPins(Key_Up_PORT,Key_Up_PIN)==0)
-      |                                         ^
-Hardware/Key.c(11): error: use of undeclared identifier 'Key_Up_PORT'
-   11 |                 if(DL_GPIO_readPins(Key_Up_PORT,Key_Up_PIN)==0)
-      |                                     ^
-Hardware/Key.c(11): error: use of undeclared identifier 'Key_Up_PIN'
-   11 |                 if(DL_GPIO_readPins(Key_Up_PORT,Key_Up_PIN)==0)
-      |                                                 ^
-Hardware/Key.c(14): error: use of undeclared identifier 'Key_Left_PORT'
-   14 |         if(DL_GPIO_readPins(Key_Left_PORT,Key_Left_PIN)==0)
-      |                             ^
-Hardware/Key.c(14): error: use of undeclared identifier 'Key_Left_PIN'
-   14 |         if(DL_GPIO_readPins(Key_Left_PORT,Key_Left_PIN)==0)
-      |                                           ^
-Hardware/Key.c(18): error: use of undeclared identifier 'Key_Down_PORT'
-   18 |         if(DL_GPIO_readPins(Key_Down_PORT,Key_Down_PIN)==0)
-      |                             ^
-Hardware/Key.c(18): error: use of undeclared identifier 'Key_Down_PIN'
-   18 |         if(DL_GPIO_readPins(Key_Down_PORT,Key_Down_PIN)==0)
-      |                                           ^
-Hardware/Key.c(22): error: use of undeclared identifier 'Key_Right_PORT'
-   22 |         if(DL_GPIO_readPins(Key_Right_PORT,Key_Right_PIN)==0)
-      |                             ^
-Hardware/Key.c(22): error: use of undeclared identifier 'Key_Right_PIN'
-   22 |         if(DL_GPIO_readPins(Key_Right_PORT,Key_Right_PIN)==0)
-      |                                            ^
-Hardware/Key.c(26): error: use of undeclared identifier 'Key_Central_PORT'
-   26 |         if(DL_GPIO_readPins(Key_Central_PORT,Key_Central_PIN)==0)
-      |                             ^
-Hardware/Key.c(26): error: use of undeclared identifier 'Key_Central_PIN'
-   26 |         if(DL_GPIO_readPins(Key_Central_PORT,Key_Central_PIN)==0)
-      |                                              ^
-12 errors generated.
-compiling Key.c...
-../empty.c(110): error: use of undeclared identifier 'TIMER_1_INST_INT_IRQN'
-  110 |         NVIC_ClearPendingIRQ(TIMER_1_INST_INT_IRQN);//清除TIMER1定时中断标志
-      |                              ^
-../empty.c(112): error: use of undeclared identifier 'TIMER_1_INST_INT_IRQN'
-  112 |         NVIC_EnableIRQ(TIMER_1_INST_INT_IRQN);//使能TIMER1定时中断
-      |                        ^
-../empty.c(114): error: use of undeclared identifier 'TIMER_1_INST'
-  114 |         DL_TimerG_startCounter(TIMER_1_INST);//启动定时器
-      |                                ^
-../empty.c(794): error: use of undeclared identifier 'TIMER_1_INST'
-  794 |   switch (DL_TimerG_getPendingInterrupt(TIMER_1_INST)) //获取中断挂起标志
-      |                                         ^
-../empty.c(898): error: use of undeclared identifier 'TIMER_1_INST'
-  898 |                         DL_TimerG_clearInterruptStatus(TIMER_1_INST, DL_TIMER_IIDX_ZERO);               
-      |                                                        ^
-5 errors generated.
 compiling empty.c...
-Hardware/OLED.c(13): error: use of undeclared identifier 'OLED_OLED_SCL_PORT'
-   13 |                 DL_GPIO_setPins(OLED_OLED_SCL_PORT,OLED_OLED_SCL_PIN);
-      |                                 ^
-Hardware/OLED.c(13): error: use of undeclared identifier 'OLED_OLED_SCL_PIN'
-   13 |                 DL_GPIO_setPins(OLED_OLED_SCL_PORT,OLED_OLED_SCL_PIN);
-      |                                                    ^
-Hardware/OLED.c(17): error: use of undeclared identifier 'OLED_OLED_SCL_PORT'
-   17 |                 DL_GPIO_clearPins(OLED_OLED_SCL_PORT,OLED_OLED_SCL_PIN);
-      |                                   ^
-Hardware/OLED.c(17): error: use of undeclared identifier 'OLED_OLED_SCL_PIN'
-   17 |                 DL_GPIO_clearPins(OLED_OLED_SCL_PORT,OLED_OLED_SCL_PIN);
-      |                                                      ^
-Hardware/OLED.c(25): error: use of undeclared identifier 'OLED_OLED_SDA_PORT'
-   25 |                 DL_GPIO_setPins(OLED_OLED_SDA_PORT,OLED_OLED_SDA_PIN);
-      |                                 ^
-Hardware/OLED.c(25): error: use of undeclared identifier 'OLED_OLED_SDA_PIN'
-   25 |                 DL_GPIO_setPins(OLED_OLED_SDA_PORT,OLED_OLED_SDA_PIN);
-      |                                                    ^
-Hardware/OLED.c(29): error: use of undeclared identifier 'OLED_OLED_SDA_PORT'
-   29 |                 DL_GPIO_clearPins(OLED_OLED_SDA_PORT,OLED_OLED_SDA_PIN);
-      |                                   ^
-Hardware/OLED.c(29): error: use of undeclared identifier 'OLED_OLED_SDA_PIN'
-   29 |                 DL_GPIO_clearPins(OLED_OLED_SDA_PORT,OLED_OLED_SDA_PIN);
-      |                                                      ^
-8 errors generated.
-compiling OLED.c...
-".\Objects\empty_LP_MSPM0G3507_nortos_keil.axf" - 40 Error(s), 0 Warning(s).
+linking...
+Program Size: Code=24052 RO-data=1016 RW-data=20 ZI-data=17644  
+FromELF: creating hex file...
+".\Objects\empty_LP_MSPM0G3507_nortos_keil.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -229,8 +78,7 @@ Package Vendor: TexasInstruments
 <h2>Collection of Component include folders:</h2>
 
 <h2>Collection of Component Files used:</h2>
-Target not created.
-Build Time Elapsed:  00:00:05
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>

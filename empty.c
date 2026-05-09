@@ -122,12 +122,14 @@ int main(void)
 	NVIC_EnableIRQ(TIMG0_INT_IRQn);//使能测速定时中断
 		
 	while(1)
-	{			
+	{	
+
 		track();//红外循迹检测放在这循迹更稳定
 
 			// 角度归一化处理，确保Basic_set_yaw在-180~180范围内
 			while(Basic_set_yaw > 180.0f) Basic_set_yaw += -360.0f;
 			while(Basic_set_yaw < -180.0f) Basic_set_yaw += 360.0f;
+		
 		//开机上电时获取五十次yaw轴数据的平均值作为基准轴
 		if(Yaw_RxFlag && times_yaw <= 50)
 		{
@@ -683,6 +685,7 @@ int main(void)
 
 			
 		}
+		SetL_duty(10000);
 		//A6赛题到达E点处理
 		if(laps && Flag_A6set == 2 && Flag_A6 == 1 && encoder_r_sum > 3600 && encoder_l_sum > 3600 && Flag_coord > 500)
 		{
@@ -793,6 +796,7 @@ void TIMER_1_INST_IRQHandler(void)
 {
   switch (DL_TimerG_getPendingInterrupt(TIMER_1_INST)) //获取中断挂起标志
 	{
+
       case DL_TIMER_IIDX_ZERO://零事件中断，向下计数模式，计数到0中断
 			//循迹统一进入的PID调控
 			if (Flag_mode && Flag_A4 != 6 && Flag_A4 != 4)

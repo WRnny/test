@@ -40,6 +40,11 @@
 
 #include "ti_msp_dl_config.h"
 
+DL_TimerG_backupConfig gMotorBBackup;
+DL_TimerG_backupConfig gMotorABackup;
+DL_TimerA_backupConfig gTIMER_0Backup;
+DL_TimerA_backupConfig gTIMER_1Backup;
+
 /*
  *  ======== SYSCFG_DL_init ========
  *  Perform any initialization needed before using any board APIs
@@ -50,24 +55,75 @@ SYSCONFIG_WEAK void SYSCFG_DL_init(void)
     SYSCFG_DL_GPIO_init();
     /* Module-Specific Initializations*/
     SYSCFG_DL_SYSCTL_init();
-    SYSCFG_DL_Debug_UART_init();
+    SYSCFG_DL_MotorB_init();
+    SYSCFG_DL_MotorA_init();
+    SYSCFG_DL_Buzzer_init();
+    SYSCFG_DL_TIMER_0_init();
+    SYSCFG_DL_TIMER_1_init();
+    SYSCFG_DL_UART_0_init();
+    SYSCFG_DL_UART_WIT_init();
     SYSCFG_DL_DMA_init();
     SYSCFG_DL_SYSTICK_init();
+    /* Ensure backup structures have no valid state */
+	gMotorBBackup.backupRdy 	= false;
+	gMotorABackup.backupRdy 	= false;
+	gTIMER_0Backup.backupRdy 	= false;
+	gTIMER_1Backup.backupRdy 	= false;
+
+
+}
+/*
+ * User should take care to save and restore register configuration in application.
+ * See Retention Configuration section for more details.
+ */
+SYSCONFIG_WEAK bool SYSCFG_DL_saveConfiguration(void)
+{
+    bool retStatus = true;
+
+	retStatus &= DL_TimerG_saveConfiguration(MotorB_INST, &gMotorBBackup);
+	retStatus &= DL_TimerG_saveConfiguration(MotorA_INST, &gMotorABackup);
+	retStatus &= DL_TimerA_saveConfiguration(TIMER_0_INST, &gTIMER_0Backup);
+	retStatus &= DL_TimerA_saveConfiguration(TIMER_1_INST, &gTIMER_1Backup);
+
+    return retStatus;
 }
 
 
+SYSCONFIG_WEAK bool SYSCFG_DL_restoreConfiguration(void)
+{
+    bool retStatus = true;
+
+	retStatus &= DL_TimerG_restoreConfiguration(MotorB_INST, &gMotorBBackup, false);
+	retStatus &= DL_TimerG_restoreConfiguration(MotorA_INST, &gMotorABackup, false);
+	retStatus &= DL_TimerA_restoreConfiguration(TIMER_0_INST, &gTIMER_0Backup, false);
+	retStatus &= DL_TimerA_restoreConfiguration(TIMER_1_INST, &gTIMER_1Backup, false);
+
+    return retStatus;
+}
 
 SYSCONFIG_WEAK void SYSCFG_DL_initPower(void)
 {
     DL_GPIO_reset(GPIOA);
     DL_GPIO_reset(GPIOB);
-    DL_UART_Main_reset(Debug_UART_INST);
+    DL_TimerG_reset(MotorB_INST);
+    DL_TimerG_reset(MotorA_INST);
+    DL_TimerG_reset(Buzzer_INST);
+    DL_TimerA_reset(TIMER_0_INST);
+    DL_TimerA_reset(TIMER_1_INST);
+    DL_UART_Main_reset(UART_0_INST);
+    DL_UART_Main_reset(UART_WIT_INST);
 
 
 
     DL_GPIO_enablePower(GPIOA);
     DL_GPIO_enablePower(GPIOB);
-    DL_UART_Main_enablePower(Debug_UART_INST);
+    DL_TimerG_enablePower(MotorB_INST);
+    DL_TimerG_enablePower(MotorA_INST);
+    DL_TimerG_enablePower(Buzzer_INST);
+    DL_TimerA_enablePower(TIMER_0_INST);
+    DL_TimerA_enablePower(TIMER_1_INST);
+    DL_UART_Main_enablePower(UART_0_INST);
+    DL_UART_Main_enablePower(UART_WIT_INST);
 
 
     delay_cycles(POWER_STARTUP_DELAY);
@@ -76,68 +132,373 @@ SYSCONFIG_WEAK void SYSCFG_DL_initPower(void)
 SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
 {
 
-    DL_GPIO_initPeripheralAnalogFunction(GPIO_HFXIN_IOMUX);
-    DL_GPIO_initPeripheralAnalogFunction(GPIO_HFXOUT_IOMUX);
+    DL_GPIO_initPeripheralOutputFunction(GPIO_MotorB_C0_IOMUX,GPIO_MotorB_C0_IOMUX_FUNC);
+    DL_GPIO_enableOutput(GPIO_MotorB_C0_PORT, GPIO_MotorB_C0_PIN);
+    DL_GPIO_initPeripheralOutputFunction(GPIO_MotorA_C0_IOMUX,GPIO_MotorA_C0_IOMUX_FUNC);
+    DL_GPIO_enableOutput(GPIO_MotorA_C0_PORT, GPIO_MotorA_C0_PIN);
+    DL_GPIO_initPeripheralOutputFunction(GPIO_Buzzer_C0_IOMUX,GPIO_Buzzer_C0_IOMUX_FUNC);
+    DL_GPIO_enableOutput(GPIO_Buzzer_C0_PORT, GPIO_Buzzer_C0_PIN);
 
     DL_GPIO_initPeripheralOutputFunction(
-        GPIO_Debug_UART_IOMUX_TX, GPIO_Debug_UART_IOMUX_TX_FUNC);
+        GPIO_UART_0_IOMUX_TX, GPIO_UART_0_IOMUX_TX_FUNC);
     DL_GPIO_initPeripheralInputFunction(
-        GPIO_Debug_UART_IOMUX_RX, GPIO_Debug_UART_IOMUX_RX_FUNC);
+        GPIO_UART_0_IOMUX_RX, GPIO_UART_0_IOMUX_RX_FUNC);
+    DL_GPIO_initPeripheralInputFunction(
+        GPIO_UART_WIT_IOMUX_RX, GPIO_UART_WIT_IOMUX_RX_FUNC);
 
-    DL_GPIO_initDigitalOutputFeatures(Debug_led_Debug_led1_IOMUX,
+    DL_GPIO_initDigitalOutputFeatures(GPIO_LED_Led1_IOMUX,
 		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_DOWN,
 		 DL_GPIO_DRIVE_STRENGTH_LOW, DL_GPIO_HIZ_DISABLE);
 
-    DL_GPIO_initDigitalInputFeatures(Debug_key_Board_Key_IOMUX,
-		 DL_GPIO_INVERSION_ENABLE, DL_GPIO_RESISTOR_PULL_UP,
+    DL_GPIO_initDigitalOutputFeatures(GPIO_LED_Led2_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_DOWN,
+		 DL_GPIO_DRIVE_STRENGTH_LOW, DL_GPIO_HIZ_DISABLE);
+
+    DL_GPIO_initDigitalOutput(motor_PIN_motorA2_IOMUX);
+
+    DL_GPIO_initDigitalOutput(motor_PIN_motorB2_IOMUX);
+
+    DL_GPIO_initDigitalOutputFeatures(motor_PIN_motorA1_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_DRIVE_STRENGTH_LOW, DL_GPIO_HIZ_DISABLE);
+
+    DL_GPIO_initDigitalOutputFeatures(motor_PIN_motorB1_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_DRIVE_STRENGTH_LOW, DL_GPIO_HIZ_DISABLE);
+
+    DL_GPIO_initDigitalOutput(OLED_OLED_SCL_IOMUX);
+
+    DL_GPIO_initDigitalOutput(OLED_OLED_SDA_IOMUX);
+
+    DL_GPIO_initDigitalInputFeatures(Encoder_Left_A_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_DOWN,
 		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
-    DL_GPIO_clearPins(GPIOB, Debug_led_Debug_led1_PIN);
-    DL_GPIO_enableOutput(GPIOB, Debug_led_Debug_led1_PIN);
+    DL_GPIO_initDigitalInputFeatures(Encoder_Left_B_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Encoder_Right_A_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_DOWN,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Encoder_Right_B_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Key_Up_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Key_Left_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Key_Right_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Key_Down_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Key_Central_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_0_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_1_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_2_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_3_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_4_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_5_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(Track_PIN_6_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_clearPins(GPIOA, motor_PIN_motorA1_PIN |
+		motor_PIN_motorB1_PIN);
+    DL_GPIO_setPins(GPIOA, OLED_OLED_SDA_PIN);
+    DL_GPIO_enableOutput(GPIOA, motor_PIN_motorA1_PIN |
+		motor_PIN_motorB1_PIN |
+		OLED_OLED_SDA_PIN);
+    DL_GPIO_setLowerPinsPolarity(GPIOA, DL_GPIO_PIN_12_EDGE_RISE);
+    DL_GPIO_clearInterruptStatus(GPIOA, Encoder_Right_A_PIN);
+    DL_GPIO_enableInterrupt(GPIOA, Encoder_Right_A_PIN);
+    DL_GPIO_clearPins(GPIOB, GPIO_LED_Led1_PIN |
+		GPIO_LED_Led2_PIN |
+		motor_PIN_motorA2_PIN |
+		motor_PIN_motorB2_PIN);
+    DL_GPIO_setPins(GPIOB, OLED_OLED_SCL_PIN);
+    DL_GPIO_enableOutput(GPIOB, GPIO_LED_Led1_PIN |
+		GPIO_LED_Led2_PIN |
+		motor_PIN_motorA2_PIN |
+		motor_PIN_motorB2_PIN |
+		OLED_OLED_SCL_PIN);
+    DL_GPIO_setLowerPinsPolarity(GPIOB, DL_GPIO_PIN_6_EDGE_FALL);
+    DL_GPIO_setUpperPinsPolarity(GPIOB, DL_GPIO_PIN_23_EDGE_RISE |
+		DL_GPIO_PIN_27_EDGE_FALL);
+    DL_GPIO_clearInterruptStatus(GPIOB, Encoder_Left_A_PIN |
+		Encoder_Left_B_PIN |
+		Encoder_Right_B_PIN);
+    DL_GPIO_enableInterrupt(GPIOB, Encoder_Left_A_PIN |
+		Encoder_Left_B_PIN |
+		Encoder_Right_B_PIN);
 
 }
 
 
-static const DL_SYSCTL_SYSPLLConfig gSYSPLLConfig = {
-    .inputFreq              = DL_SYSCTL_SYSPLL_INPUT_FREQ_32_48_MHZ,
-	.rDivClk2x              = 1,
-	.rDivClk1               = 0,
-	.rDivClk0               = 0,
-	.enableCLK2x            = DL_SYSCTL_SYSPLL_CLK2X_DISABLE,
-	.enableCLK1             = DL_SYSCTL_SYSPLL_CLK1_DISABLE,
-	.enableCLK0             = DL_SYSCTL_SYSPLL_CLK0_ENABLE,
-	.sysPLLMCLK             = DL_SYSCTL_SYSPLL_MCLK_CLK0,
-	.sysPLLRef              = DL_SYSCTL_SYSPLL_REF_HFCLK,
-	.qDiv                   = 3,
-	.pDiv                   = DL_SYSCTL_SYSPLL_PDIV_1
-};
 SYSCONFIG_WEAK void SYSCFG_DL_SYSCTL_init(void)
 {
 
 	//Low Power Mode is configured to be SLEEP0
     DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
-    DL_SYSCTL_setFlashWaitState(DL_SYSCTL_FLASH_WAIT_STATE_2);
+
+    DL_SYSCTL_setSYSOSCFreq(DL_SYSCTL_SYSOSC_FREQ_BASE);
+    /* Set default configuration */
+    DL_SYSCTL_disableHFXT();
+    DL_SYSCTL_disableSYSPLL();
+    DL_SYSCTL_setULPCLKDivider(DL_SYSCTL_ULPCLK_DIV_1);
+    DL_SYSCTL_setMCLKDivider(DL_SYSCTL_MCLK_DIVIDER_DISABLE);
+
+}
+
+
+/*
+ * Timer clock configuration to be sourced by  / 2 (16000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   1000000 Hz = 16000000 Hz / (2 * (15 + 1))
+ */
+static const DL_TimerG_ClockConfig gMotorBClockConfig = {
+    .clockSel = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_2,
+    .prescale = 15U
+};
+
+static const DL_TimerG_PWMConfig gMotorBConfig = {
+    .pwmMode = DL_TIMER_PWM_MODE_EDGE_ALIGN_UP,
+    .period = 10000,
+    .isTimerWithFourCC = false,
+    .startTimer = DL_TIMER_STOP,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_MotorB_init(void) {
+
+    DL_TimerG_setClockConfig(
+        MotorB_INST, (DL_TimerG_ClockConfig *) &gMotorBClockConfig);
+
+    DL_TimerG_initPWMMode(
+        MotorB_INST, (DL_TimerG_PWMConfig *) &gMotorBConfig);
+
+    // Set Counter control to the smallest CC index being used
+    DL_TimerG_setCounterControl(MotorB_INST,DL_TIMER_CZC_CCCTL0_ZCOND,DL_TIMER_CAC_CCCTL0_ACOND,DL_TIMER_CLC_CCCTL0_LCOND);
+
+    DL_TimerG_setCaptureCompareOutCtl(MotorB_INST, DL_TIMER_CC_OCTL_INIT_VAL_HIGH,
+		DL_TIMER_CC_OCTL_INV_OUT_DISABLED, DL_TIMER_CC_OCTL_SRC_FUNCVAL,
+		DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+
+    DL_TimerG_setCaptCompUpdateMethod(MotorB_INST, DL_TIMER_CC_UPDATE_METHOD_IMMEDIATE, DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+    DL_TimerG_setCaptureCompareValue(MotorB_INST, 0, DL_TIMER_CC_0_INDEX);
+
+    DL_TimerG_enableClock(MotorB_INST);
+
 
     
-	DL_SYSCTL_setSYSOSCFreq(DL_SYSCTL_SYSOSC_FREQ_BASE);
-	/* Set default configuration */
-	DL_SYSCTL_disableHFXT();
-	DL_SYSCTL_disableSYSPLL();
-    DL_SYSCTL_setHFCLKSourceHFXTParams(DL_SYSCTL_HFXT_RANGE_32_48_MHZ,10, true);
-    DL_SYSCTL_configSYSPLL((DL_SYSCTL_SYSPLLConfig *) &gSYSPLLConfig);
-    DL_SYSCTL_setULPCLKDivider(DL_SYSCTL_ULPCLK_DIV_2);
-    DL_SYSCTL_setMCLKSource(SYSOSC, HSCLK, DL_SYSCTL_HSCLK_SOURCE_SYSPLL);
+    DL_TimerG_setCCPDirection(MotorB_INST , DL_TIMER_CC0_OUTPUT );
+
+
+}
+/*
+ * Timer clock configuration to be sourced by  / 2 (16000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   1000000 Hz = 16000000 Hz / (2 * (15 + 1))
+ */
+static const DL_TimerG_ClockConfig gMotorAClockConfig = {
+    .clockSel = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_2,
+    .prescale = 15U
+};
+
+static const DL_TimerG_PWMConfig gMotorAConfig = {
+    .pwmMode = DL_TIMER_PWM_MODE_EDGE_ALIGN_UP,
+    .period = 10000,
+    .isTimerWithFourCC = true,
+    .startTimer = DL_TIMER_STOP,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_MotorA_init(void) {
+
+    DL_TimerG_setClockConfig(
+        MotorA_INST, (DL_TimerG_ClockConfig *) &gMotorAClockConfig);
+
+    DL_TimerG_initPWMMode(
+        MotorA_INST, (DL_TimerG_PWMConfig *) &gMotorAConfig);
+
+    // Set Counter control to the smallest CC index being used
+    DL_TimerG_setCounterControl(MotorA_INST,DL_TIMER_CZC_CCCTL0_ZCOND,DL_TIMER_CAC_CCCTL0_ACOND,DL_TIMER_CLC_CCCTL0_LCOND);
+
+    DL_TimerG_setCaptureCompareOutCtl(MotorA_INST, DL_TIMER_CC_OCTL_INIT_VAL_HIGH,
+		DL_TIMER_CC_OCTL_INV_OUT_DISABLED, DL_TIMER_CC_OCTL_SRC_FUNCVAL,
+		DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+
+    DL_TimerG_setCaptCompUpdateMethod(MotorA_INST, DL_TIMER_CC_UPDATE_METHOD_IMMEDIATE, DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+    DL_TimerG_setCaptureCompareValue(MotorA_INST, 0, DL_TIMER_CC_0_INDEX);
+
+    DL_TimerG_enableClock(MotorA_INST);
+
+
+    
+    DL_TimerG_setCCPDirection(MotorA_INST , DL_TIMER_CC0_OUTPUT );
+
+
+}
+/*
+ * Timer clock configuration to be sourced by  / 2 (16000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   1000000 Hz = 16000000 Hz / (2 * (15 + 1))
+ */
+static const DL_TimerG_ClockConfig gBuzzerClockConfig = {
+    .clockSel = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_2,
+    .prescale = 15U
+};
+
+static const DL_TimerG_PWMConfig gBuzzerConfig = {
+    .pwmMode = DL_TIMER_PWM_MODE_EDGE_ALIGN,
+    .period = 1000,
+    .isTimerWithFourCC = true,
+    .startTimer = DL_TIMER_STOP,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_Buzzer_init(void) {
+
+    DL_TimerG_setClockConfig(
+        Buzzer_INST, (DL_TimerG_ClockConfig *) &gBuzzerClockConfig);
+
+    DL_TimerG_initPWMMode(
+        Buzzer_INST, (DL_TimerG_PWMConfig *) &gBuzzerConfig);
+
+    // Set Counter control to the smallest CC index being used
+    DL_TimerG_setCounterControl(Buzzer_INST,DL_TIMER_CZC_CCCTL0_ZCOND,DL_TIMER_CAC_CCCTL0_ACOND,DL_TIMER_CLC_CCCTL0_LCOND);
+
+    DL_TimerG_setCaptureCompareOutCtl(Buzzer_INST, DL_TIMER_CC_OCTL_INIT_VAL_LOW,
+		DL_TIMER_CC_OCTL_INV_OUT_DISABLED, DL_TIMER_CC_OCTL_SRC_FUNCVAL,
+		DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+
+    DL_TimerG_setCaptCompUpdateMethod(Buzzer_INST, DL_TIMER_CC_UPDATE_METHOD_IMMEDIATE, DL_TIMERG_CAPTURE_COMPARE_0_INDEX);
+    DL_TimerG_setCaptureCompareValue(Buzzer_INST, 1000, DL_TIMER_CC_0_INDEX);
+
+    DL_TimerG_enableClock(Buzzer_INST);
+
+
+    
+    DL_TimerG_setCCPDirection(Buzzer_INST , DL_TIMER_CC0_OUTPUT );
+
 
 }
 
 
 
-static const DL_UART_Main_ClockConfig gDebug_UARTClockConfig = {
+/*
+ * Timer clock configuration to be sourced by BUSCLK /  (16000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   62500 Hz = 16000000 Hz / (2 * (255 + 1))
+ */
+static const DL_TimerA_ClockConfig gTIMER_0ClockConfig = {
+    .clockSel    = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_2,
+    .prescale    = 255U,
+};
+
+/*
+ * Timer load value (where the counter starts from) is calculated as (timerPeriod * timerClockFreq) - 1
+ * TIMER_0_INST_LOAD_VALUE = (50ms * 62500 Hz) - 1
+ */
+static const DL_TimerA_TimerConfig gTIMER_0TimerConfig = {
+    .period     = TIMER_0_INST_LOAD_VALUE,
+    .timerMode  = DL_TIMER_TIMER_MODE_PERIODIC,
+    .startTimer = DL_TIMER_STOP,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_TIMER_0_init(void) {
+
+    DL_TimerA_setClockConfig(TIMER_0_INST,
+        (DL_TimerA_ClockConfig *) &gTIMER_0ClockConfig);
+
+    DL_TimerA_initTimerMode(TIMER_0_INST,
+        (DL_TimerA_TimerConfig *) &gTIMER_0TimerConfig);
+    DL_TimerA_enableInterrupt(TIMER_0_INST , DL_TIMERA_INTERRUPT_ZERO_EVENT);
+    DL_TimerA_enableClock(TIMER_0_INST);
+
+
+
+
+
+}
+
+/*
+ * Timer clock configuration to be sourced by BUSCLK /  (4000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   40000 Hz = 4000000 Hz / (8 * (99 + 1))
+ */
+static const DL_TimerA_ClockConfig gTIMER_1ClockConfig = {
+    .clockSel    = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_8,
+    .prescale    = 99U,
+};
+
+/*
+ * Timer load value (where the counter starts from) is calculated as (timerPeriod * timerClockFreq) - 1
+ * TIMER_1_INST_LOAD_VALUE = (0.05 * 40000 Hz) - 1
+ */
+static const DL_TimerA_TimerConfig gTIMER_1TimerConfig = {
+    .period     = TIMER_1_INST_LOAD_VALUE,
+    .timerMode  = DL_TIMER_TIMER_MODE_PERIODIC,
+    .startTimer = DL_TIMER_START,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_TIMER_1_init(void) {
+
+    DL_TimerA_setClockConfig(TIMER_1_INST,
+        (DL_TimerA_ClockConfig *) &gTIMER_1ClockConfig);
+
+    DL_TimerA_initTimerMode(TIMER_1_INST,
+        (DL_TimerA_TimerConfig *) &gTIMER_1TimerConfig);
+    DL_TimerA_enableInterrupt(TIMER_1_INST , DL_TIMERA_INTERRUPT_ZERO_EVENT);
+    DL_TimerA_enableClock(TIMER_1_INST);
+
+
+
+
+
+}
+
+
+
+static const DL_UART_Main_ClockConfig gUART_0ClockConfig = {
     .clockSel    = DL_UART_MAIN_CLOCK_BUSCLK,
     .divideRatio = DL_UART_MAIN_CLOCK_DIVIDE_RATIO_1
 };
 
-static const DL_UART_Main_Config gDebug_UARTConfig = {
+static const DL_UART_Main_Config gUART_0Config = {
     .mode        = DL_UART_MAIN_MODE_NORMAL,
     .direction   = DL_UART_MAIN_DIRECTION_TX_RX,
     .flowControl = DL_UART_MAIN_FLOW_CONTROL_NONE,
@@ -146,48 +507,88 @@ static const DL_UART_Main_Config gDebug_UARTConfig = {
     .stopBits    = DL_UART_MAIN_STOP_BITS_ONE
 };
 
-SYSCONFIG_WEAK void SYSCFG_DL_Debug_UART_init(void)
+SYSCONFIG_WEAK void SYSCFG_DL_UART_0_init(void)
 {
-    DL_UART_Main_setClockConfig(Debug_UART_INST, (DL_UART_Main_ClockConfig *) &gDebug_UARTClockConfig);
+    DL_UART_Main_setClockConfig(UART_0_INST, (DL_UART_Main_ClockConfig *) &gUART_0ClockConfig);
 
-    DL_UART_Main_init(Debug_UART_INST, (DL_UART_Main_Config *) &gDebug_UARTConfig);
+    DL_UART_Main_init(UART_0_INST, (DL_UART_Main_Config *) &gUART_0Config);
     /*
      * Configure baud rate by setting oversampling and baud rate divisors.
-     *  Target baud rate: 9600
-     *  Actual baud rate: 9599.81
+     *  Target baud rate: 115200
+     *  Actual baud rate: 115211.52
      */
-    DL_UART_Main_setOversampling(Debug_UART_INST, DL_UART_OVERSAMPLING_RATE_16X);
-    DL_UART_Main_setBaudRateDivisor(Debug_UART_INST, Debug_UART_IBRD_40_MHZ_9600_BAUD, Debug_UART_FBRD_40_MHZ_9600_BAUD);
+    DL_UART_Main_setOversampling(UART_0_INST, DL_UART_OVERSAMPLING_RATE_16X);
+    DL_UART_Main_setBaudRateDivisor(UART_0_INST, UART_0_IBRD_32_MHZ_115200_BAUD, UART_0_FBRD_32_MHZ_115200_BAUD);
 
 
     /* Configure Interrupts */
-    DL_UART_Main_enableInterrupt(Debug_UART_INST,
+    DL_UART_Main_enableInterrupt(UART_0_INST,
                                  DL_UART_MAIN_INTERRUPT_RX);
 
-    /* Configure DMA Receive Event */
-    DL_UART_Main_enableDMAReceiveEvent(Debug_UART_INST, DL_UART_DMA_INTERRUPT_RX);
 
-    DL_UART_Main_enable(Debug_UART_INST);
+    DL_UART_Main_enable(UART_0_INST);
 }
 
-static const DL_DMA_Config gDebug_DMAConfig = {
-    .transferMode   = DL_DMA_FULL_CH_REPEAT_SINGLE_TRANSFER_MODE,
+static const DL_UART_Main_ClockConfig gUART_WITClockConfig = {
+    .clockSel    = DL_UART_MAIN_CLOCK_BUSCLK,
+    .divideRatio = DL_UART_MAIN_CLOCK_DIVIDE_RATIO_1
+};
+
+static const DL_UART_Main_Config gUART_WITConfig = {
+    .mode        = DL_UART_MAIN_MODE_NORMAL,
+    .direction   = DL_UART_MAIN_DIRECTION_RX,
+    .flowControl = DL_UART_MAIN_FLOW_CONTROL_NONE,
+    .parity      = DL_UART_MAIN_PARITY_NONE,
+    .wordLength  = DL_UART_MAIN_WORD_LENGTH_8_BITS,
+    .stopBits    = DL_UART_MAIN_STOP_BITS_ONE
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_UART_WIT_init(void)
+{
+    DL_UART_Main_setClockConfig(UART_WIT_INST, (DL_UART_Main_ClockConfig *) &gUART_WITClockConfig);
+
+    DL_UART_Main_init(UART_WIT_INST, (DL_UART_Main_Config *) &gUART_WITConfig);
+    /*
+     * Configure baud rate by setting oversampling and baud rate divisors.
+     *  Target baud rate: 115200
+     *  Actual baud rate: 115211.52
+     */
+    DL_UART_Main_setOversampling(UART_WIT_INST, DL_UART_OVERSAMPLING_RATE_16X);
+    DL_UART_Main_setBaudRateDivisor(UART_WIT_INST, UART_WIT_IBRD_32_MHZ_115200_BAUD, UART_WIT_FBRD_32_MHZ_115200_BAUD);
+
+
+    /* Configure Interrupts */
+    DL_UART_Main_enableInterrupt(UART_WIT_INST,
+                                 DL_UART_MAIN_INTERRUPT_RX_TIMEOUT_ERROR);
+
+    /* Configure DMA Receive Event */
+    DL_UART_Main_enableDMAReceiveEvent(UART_WIT_INST, DL_UART_DMA_INTERRUPT_RX);
+    /* Configure FIFOs */
+    DL_UART_Main_enableFIFOs(UART_WIT_INST);
+    DL_UART_Main_setRXFIFOThreshold(UART_WIT_INST, DL_UART_RX_FIFO_LEVEL_1_2_FULL);
+
+    DL_UART_Main_setRXInterruptTimeout(UART_WIT_INST, 1);
+
+    DL_UART_Main_enable(UART_WIT_INST);
+}
+
+static const DL_DMA_Config gDMA_WITConfig = {
+    .transferMode   = DL_DMA_SINGLE_TRANSFER_MODE,
     .extendedMode   = DL_DMA_NORMAL_MODE,
     .destIncrement  = DL_DMA_ADDR_INCREMENT,
     .srcIncrement   = DL_DMA_ADDR_UNCHANGED,
     .destWidth      = DL_DMA_WIDTH_BYTE,
     .srcWidth       = DL_DMA_WIDTH_BYTE,
-    .trigger        = Debug_UART_INST_DMA_TRIGGER,
+    .trigger        = UART_WIT_INST_DMA_TRIGGER,
     .triggerType    = DL_DMA_TRIGGER_TYPE_EXTERNAL,
 };
 
-SYSCONFIG_WEAK void SYSCFG_DL_Debug_DMA_init(void)
+SYSCONFIG_WEAK void SYSCFG_DL_DMA_WIT_init(void)
 {
-    DL_DMA_setTransferSize(DMA, Debug_DMA_CHAN_ID, 256);
-    DL_DMA_initChannel(DMA, Debug_DMA_CHAN_ID , (DL_DMA_Config *) &gDebug_DMAConfig);
+    DL_DMA_initChannel(DMA, DMA_WIT_CHAN_ID , (DL_DMA_Config *) &gDMA_WITConfig);
 }
 SYSCONFIG_WEAK void SYSCFG_DL_DMA_init(void){
-    SYSCFG_DL_Debug_DMA_init();
+    SYSCFG_DL_DMA_WIT_init();
 }
 
 
@@ -197,6 +598,6 @@ SYSCONFIG_WEAK void SYSCFG_DL_SYSTICK_init(void)
      * Initializes the SysTick period to 1.00 ms,
      * enables the interrupt, and starts the SysTick Timer
      */
-    DL_SYSTICK_config(80000);
+    DL_SYSTICK_config(32000);
 }
 
